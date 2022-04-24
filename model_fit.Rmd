@@ -1,0 +1,70 @@
+---
+title: "model_fit"
+author: "Peng Liu"
+date: "4/24/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(R.matlab)
+library(dplyr)
+library(ggplot2)
+library(psych)
+library(devtools)
+# install_github("vqv/ggbiplot")
+library(ggbiplot)
+```
+
+```{r}
+set.seed(2022)
+zm_bb409 <- readMat("~/Downloads/mouse Data/Zero_Maze/608034_409/Day_1/Trial_001_0/binned_behavior.mat") %>% as.data.frame() %>% t() %>% as.data.frame()
+
+zm_zs409 <- readMat("~/Downloads/mouse Data/Zero_Maze/608034_409/Day_1/Trial_001_0/binned_zscore.mat")%>% as.data.frame()
+
+zm_409 <- cbind.data.frame(zm_bb409,zm_zs409)
+zm_drop <- zm_409 %>% filter(V1 != 1| V2 != 1)
+zm_drop$V2 <- NULL
+df<-sort(sample(1:nrow(zm_drop), nrow(zm_drop)*.))
+train_open <-zm_drop[df,]
+test_open <- zm_drop[-df,]
+
+```
+
+```{r}
+train_open1 <- train_open
+train_open1$V1 <- NULL
+
+std <- scale(train_open1)
+df <- as.data.frame(std)
+c <- as.data.frame(cor(df))  
+# bartlett.test(c) 
+KMO(train_open1) 
+
+pca_zm <- prcomp(train_open1, center=TRUE, scale=TRUE)
+summary(pca_zm)
+
+
+
+
+ggbiplot(pca_zm, ellipse = True,obs.scale = 1, var.scale = 1,alpha = 0.1, labels.size = 0.01)+
+  geom_point(size = 0.01,alpha = 0.1)
+
+
+fa.parallel(train_open1, fa = "both", n.iter = 1, show.legend = T)
+df.pc <- principal(train_open1, nfactors = 23, score = T)
+#df.pc
+r <- round(unclass(df.pc$weights),4)
+score <- std%*%r
+```
+
+```{r}
+set.seed(2022)
+train_open2 <- cbind.data.frame(train_open$V1,score)
+open_data <- data.frame(open = train_open[,"V1"],pca_zm$x[,1:23])
+names(train_open2)[1]<-'open'
+glm_fit = glm(open~., data=train_open2, family = binomial("logit") )
+summary(glm_fit)
+par(mfrow = c(2,2))
+plot(glm_fit)
+```
