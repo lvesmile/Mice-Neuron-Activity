@@ -25,7 +25,7 @@ zm_zs409 <- readMat("~/Downloads/mouse Data/Zero_Maze/608034_409/Day_1/Trial_001
 zm_409 <- cbind.data.frame(zm_bb409,zm_zs409)
 zm_drop <- zm_409 %>% filter(V1 != 1| V2 != 1)
 zm_drop$V2 <- NULL
-df<-sort(sample(1:nrow(zm_drop), nrow(zm_drop)*.))
+df<-sort(sample(1:nrow(zm_drop), nrow(zm_drop)*.3))
 train_open <-zm_drop[df,]
 test_open <- zm_drop[-df,]
 
@@ -55,16 +55,34 @@ fa.parallel(train_open1, fa = "both", n.iter = 1, show.legend = T)
 df.pc <- principal(train_open1, nfactors = 23, score = T)
 #df.pc
 r <- round(unclass(df.pc$weights),4)
-score <- std%*%r
+score <- std%*%r 
 ```
 
 ```{r}
 set.seed(2022)
 train_open2 <- cbind.data.frame(train_open$V1,score)
-open_data <- data.frame(open = train_open[,"V1"],pca_zm$x[,1:23])
+open_data <- data.frame(open = train_open[,"V1"],pca_zm$x[,1:21])
 names(train_open2)[1]<-'open'
-glm_fit = glm(open~., data=train_open2, family = binomial("logit") )
-summary(glm_fit)
+names(train_open)[1]<-'open'
+# the data using fa.parallel way
+glm_fit1 = glm(open~., data=train_open2, family = binomial("logit") )
+# the data using prcomp way
+glm_fit2 = glm(open~., data=open_data, family = binomial("logit") )
+#they are same
+summary(glm_fit1)
+summary(glm_fit2)
+
 par(mfrow = c(2,2))
 plot(glm_fit)
 ```
+
+```{r}
+library(keras)
+plot(s, train_open$y1, ylim = c(min(train_open), max(train_open)), type = "l")
+lines(s, df$y2, type = "l")
+lines(s, df$x1, type = "l")
+lines(s, df$x2, type = "l")
+lines(s, df$x3, type = "l")
+
+```
+
