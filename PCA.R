@@ -1,8 +1,8 @@
 library(tidyverse)
 library(R.matlab)
 library(e1071)
-library(caret)
-library(pls)
+#install.packages("facetoextra")
+library(factoextra)
 set.seed(2022)
 
 zm_bb409 <- readMat("Zero_Maze/608034_409/Day_1/Trial_001_0/binned_behavior.mat") %>% as.data.frame() %>% t() %>% as.data.frame()
@@ -16,6 +16,8 @@ zm_drop$V2<- NULL #drop open arm
 zm_drop$V1 <- NULL
 
 pca <- prcomp(zm_drop, scale=TRUE)
+
+fviz_eig(pca, ncp = 25,addlabels = TRUE)
 
 
 pcs <- as.data.frame(pca$x[,1:21])
@@ -32,6 +34,8 @@ plot(cumsum(pve), xlab = "Principal Component",
 
 set.seed(2022)
 zm_part<- zm_409 %>% filter(V1 != 0 | V2 !=0)
+zm_part$V2 <- NULL
+names(zm_part)[1]<- "closed_arm"
 dat <- cbind(zm_part$V1, pcs) %>% as.data.frame()
 names(dat)[1]<- "closed_arm"
 dat$closed_arm <- as.factor(dat$closed_arm)
