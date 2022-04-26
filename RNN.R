@@ -1,9 +1,19 @@
-source("PCA.R")
-
+library(tidyverse)
+library(R.matlab)
+library(e1071)
+library(caret)
 library(tensorflow)
 library(keras)
+set.seed(2022)
 
+zm_bb409 <- readMat("DATA/Zero_Maze/608034_409/Day_1/Trial_001_0/binned_behavior.mat") %>% as.data.frame() %>% t() %>% as.data.frame()
 
+zm_zs409 <- readMat("DATA/Zero_Maze/608034_409/Day_1/Trial_001_0/binned_zscore.mat")%>% as.data.frame()
+
+set.seed(2022)
+zm_409 <- cbind.data.frame(zm_bb409,zm_zs409)
+zm_part<- zm_409 %>% filter(V1 != 0 | V2 !=0)
+names(zm_part)[1]<- "closed_arm"
 max_len <- 10
 batch_size <- 20
 total_epochs <- 15
